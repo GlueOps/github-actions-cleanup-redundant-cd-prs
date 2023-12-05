@@ -1,0 +1,85 @@
+name: "Cleanup Redundant PRs and Branches from CD Automation"
+author: "@GlueOps"
+description: "The GlueOps Platform uses pull requests for an approval step to interrupt Continuous Deployment.  This action closes redundant apprval pull requests and deletes their associated branches."
+branding:
+  icon: 'trash-2'
+  color: 'yellow'
+
+
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        description: "Pull Request Number"
+        required: true
+        type: number
+    secrets:
+      gh_token:
+        description: "GitHub token for gh cli"
+        required: true
+
+jobs:
+  cleanup-prs-branches:
+    runs-on: ubuntu-latest
+    env:
+      GH_CLI_VERSION: '2.39.2'
+      JQ_VERSION: '1.7'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install gh and jq
+      run: |
+        sudo apt update
+        sudo apt install -y wget
+        wget https://github.com/cli/cli/releases/download/v${{ env.GH_CLI_VERSION }}/gh_${{ env.GH_CLI_VERSION }}_linux_amd64.deb
+        sudo dpkg -i gh_${{ env.GH_CLI_VERSION }}_linux_amd64.deb
+        wget https://github.com/jqlang/jq/releases/download/jq-${{ env.JQ_VERSION }}/jq-linux-amd64
+        sudo mv jq-linux-amd64 /usr/bin/jq
+        sudo chmod +x /usr/bin/jq
+
+    - name: Execute Script to Close Redundant PRs and Delete Branches
+      env:
+        GITHUB_PR_NUMBER: ${{ inputs.pr_number }}
+        GH_TOKEN: ${{ secrets.gh_token }}
+      run: |
+        parse_pr_title() {
+            local title=$1
+            local app_name=$(echo $title | cut -d'/' -f1)
+            local temp=$(echo $title | cut -d'/' -f2-)
+            local environment=$(echo $temp | cut -d'-' -f2)
+            local tag=$(echo $title | rev | cut -d'-' -f1 | rev)
+            echo $app_name $environment $tag
+        }
+
+        close_pr_and_delete_branch() {
+            local pr_number=$1
+            local branch_name=$2
+
+            gh pr close $pr_number
+
+            gh api -X DELETE repos/:owner/:repo/git/refs/heads/$branch_name
+        }
+
+        main() {
+            trigger_pr_number=$1
+            trigger_pr=$(gh pr view $trigger_pr_number --json title,headRefName)
+            trigger_pr_title=$(echo $trigger_pr | jq -r '.title')
+            trigger_pr_branch=$(echo $trigger_pr | jq -r '.headRefName')
+            read app_name environment current_tag <<< $(parse_pr_title "$trigger_pr_title")
+
+            open_prs=$(gh pr list --state open --json title,number,headRefName)
+
+            echo "$open_prs" | jq -c '.[]' | while read pr; do
+                pr_title=$(echo $pr | jq -r '.title')
+                pr_number=$(echo $pr | jq -r '.number')
+                pr_branch=$(echo $pr | jq -r '.headRefName')
+                read pr_app_name pr_environment pr_tag <<< $(parse_pr_title "$pr_title")
+
+                if [[ "$pr_app_name" == "$app_name" && "$pr_environment" == "$environment" && "$pr_tag" != "$current_tag" && $pr_number < $trigger_pr_number ]]; then
+                    close_pr_and_delete_branch $pr_number $pr_branch
+                fi
+            done
+        }
+
+        main $GITHUB_PR_NUMBER
