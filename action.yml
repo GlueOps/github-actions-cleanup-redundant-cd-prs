@@ -1,6 +1,6 @@
 name: "Cleanup Redundant PRs and Branches from CD Automation"
 author: "@GlueOps"
-description: "The GlueOps Platform uses pull requests for an approval step to interrupt Continuous Deployment.  This action closes redundant approval pull requests and deletes their associated branches."
+description: "GlueOps can use PRs to approve Continuous Deployment.  This action closes redundant PRs and deletes the associated branches."
 branding:
   icon: 'trash-2'
   color: 'yellow'
