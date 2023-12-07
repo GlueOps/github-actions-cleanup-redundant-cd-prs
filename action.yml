@@ -31,6 +31,7 @@ runs:
     uses: actions/checkout@v3
 
   - name: Install gh and jq
+    shell: bash
     run: |
       sudo apt update
       sudo apt install -y wget
@@ -41,6 +42,7 @@ runs:
       sudo chmod +x /usr/bin/jq
 
   - name: Execute Script to Close Redundant PRs and Delete Branches
+    shell: bash
     env:
       GITHUB_PR_NUMBER: ${{ inputs.pr_number }}
       GH_TOKEN: ${{ inputs.gh_token }}
