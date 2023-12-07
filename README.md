@@ -32,9 +32,11 @@ on:
 
 jobs:
   call-close-old-prs-workflow:
-    uses: GlueOps/GlueOps/github-actions-cleanup-redundant-cd-prs@@v0.1.0
-    with:
-      pr_number: ${{ github.event.pull_request.number }}
-    secrets:
-      gh_token: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Cleanup
+        uses: GlueOps/github-actions-cleanup-redundant-cd-prs@v0.1.1
+        with:
+          pr_number: ${{ github.event.pull_request.number }}
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
 ```
