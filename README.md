@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run Cleanup
-        uses: GlueOps/github-actions-cleanup-redundant-cd-prs@v0.1.1
+        uses: GlueOps/github-actions-cleanup-redundant-cd-prs@v0.1.2
         with:
           pr_number: ${{ github.event.pull_request.number }}
           gh_token: ${{ secrets.GITHUB_TOKEN }}
