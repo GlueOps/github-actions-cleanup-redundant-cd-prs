@@ -33,6 +33,7 @@ runs:
   - name: Install gh and jq
     shell: bash
     run: |
+      echo "::group::installing gh cli and jq..."
       sudo apt update
       sudo apt install -y wget
       wget https://github.com/cli/cli/releases/download/v${{ inputs.gh_cli_version }}/gh_${{ inputs.gh_cli_version }}_linux_amd64.deb
@@ -40,6 +41,7 @@ runs:
       wget https://github.com/jqlang/jq/releases/download/jq-${{ inputs.jq_version }}/jq-linux-amd64
       sudo mv jq-linux-amd64 /usr/bin/jq
       sudo chmod +x /usr/bin/jq
+      echo "::endgroup::"
 
   - name: Execute Script to Close Redundant PRs and Delete Branches
     shell: bash
@@ -86,4 +88,6 @@ runs:
           done
       }
 
+      echo "::group::cleaning up redundant PRs and branches"
       main $GITHUB_PR_NUMBER
+      echo "::endgroup::"
