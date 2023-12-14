@@ -82,6 +82,14 @@ runs:
               pr_branch=$(echo $pr | jq -r '.headRefName')
               read pr_app_name pr_environment pr_tag <<< $(parse_pr_title "$pr_title")
 
+              echo "debugging"
+              echo "pr_app_name: $pr_app_name"
+              echo "app_name: $app_name"
+              echo "pr_environment: $pr_environment"
+              echo "environment: $environment"
+              echo "pr_tag: $pr_tag"
+              echo "current_tag: $current_tag"
+
               if [[ "$pr_app_name" == "$app_name" && "$pr_environment" == "$environment" && "$pr_tag" != "$current_tag" && $pr_number < $trigger_pr_number ]]; then
                   close_pr_and_delete_branch $pr_number $pr_branch
               fi
