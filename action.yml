@@ -71,25 +71,25 @@ runs:
           trigger_pr_number=$1
           trigger_pr=$(gh pr view $trigger_pr_number --json headRefName)
           trigger_pr_branch=$(echo $trigger_pr | jq -r '.headRefName')
-          read app_name environment current_tag <<< $(parse_pr_headRefName "$trigger_pr_branch")
+          read trigger_pr_app_name trigger_pr_environment trigger_pr_tag <<< $(parse_pr_headRefName "$trigger_pr_branch")
 
           open_prs=$(gh pr list --state open --json number,headRefName)
 
           echo "$open_prs" | jq -c '.[]' | while read pr; do
-              pr_number=$(echo $pr | jq -r '.number')
-              pr_branch=$(echo $pr | jq -r '.headRefName')
-              read pr_app_name pr_environment pr_tag <<< $(parse_pr_headRefName "$pr_branch")
+              open_pr_number=$(echo $pr | jq -r '.number')
+              open_pr_branch=$(echo $pr | jq -r '.headRefName')
+              read open_pr_app_name open_pr_environment open_pr_tag <<< $(parse_pr_headRefName "$open_pr_branch")
 
               echo "debugging"
-              echo "pr_app_name: $pr_app_name"
-              echo "app_name: $app_name"
-              echo "pr_environment: $pr_environment"
-              echo "environment: $environment"
-              echo "pr_tag: $pr_tag"
-              echo "current_tag: $current_tag"
+              echo "trigger_pr_app_name: $trigger_pr_app_name"
+              echo "open_pr_app_name: $open_pr_app_name"
+              echo "trigger_pr_environment: $trigger_pr_environment"
+              echo "open_pr_environment: $open_pr_environment"
+              echo "trigger_pr_tag: $trigger_pr_tag"
+              echo "open_pr_tag: $open_pr_tag"
 
-              if [[ "$pr_app_name" == "$app_name" && "$pr_environment" == "$environment" && "$pr_tag" != "$current_tag" && $pr_number < $trigger_pr_number ]]; then
-                  close_pr_and_delete_branch $pr_number $pr_branch
+              if [[ "$trigger_pr_app_name" == "$open_pr_app_name" && "$trigger_pr_environment" == "$open_pr_environment" && "$trigger_pr_tag" != "$open_pr_tag" && $trigger_pr_number > $open_pr_number ]]; then
+                  close_pr_and_delete_branch $open_pr_number $open_pr_branch
               fi
           done
       }
