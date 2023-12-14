@@ -49,12 +49,12 @@ runs:
       GITHUB_PR_NUMBER: ${{ inputs.pr_number }}
       GH_TOKEN: ${{ inputs.gh_token }}
     run: |
-      parse_pr_title() {
-          local title=$1
-          local app_name=$(echo $title | cut -d'/' -f1)
-          local temp=$(echo $title | cut -d'/' -f2-)
+      parse_pr_headRefName() {
+          local headRefName=$1
+          local app_name=$(echo $headRefName | cut -d'/' -f1)
+          local temp=$(echo $headRefName | cut -d'/' -f2-)
           local environment=$(echo $temp | cut -d'-' -f2)
-          local tag=$(echo $title | rev | cut -d'-' -f1 | rev)
+          local tag=$(echo $headRefName | rev | cut -d'-' -f1 | rev)
           echo $app_name $environment $tag
       }
 
@@ -69,21 +69,19 @@ runs:
 
       main() {
           trigger_pr_number=$1
-          trigger_pr=$(gh pr view $trigger_pr_number --json title,headRefName)
-          trigger_pr_title=$(echo $trigger_pr | jq -r '.title')
+          trigger_pr=$(gh pr view $trigger_pr_number --json headRefName)
           trigger_pr_branch=$(echo $trigger_pr | jq -r '.headRefName')
-          read app_name environment current_tag <<< $(parse_pr_title "$trigger_pr_title")
+          read trigger_pr_app_name trigger_pr_environment trigger_pr_tag <<< $(parse_pr_headRefName "$trigger_pr_branch")
 
-          open_prs=$(gh pr list --state open --json title,number,headRefName)
+          open_prs=$(gh pr list --state open --json number,headRefName)
 
           echo "$open_prs" | jq -c '.[]' | while read pr; do
-              pr_title=$(echo $pr | jq -r '.title')
-              pr_number=$(echo $pr | jq -r '.number')
-              pr_branch=$(echo $pr | jq -r '.headRefName')
-              read pr_app_name pr_environment pr_tag <<< $(parse_pr_title "$pr_title")
+              open_pr_number=$(echo $pr | jq -r '.number')
+              open_pr_branch=$(echo $pr | jq -r '.headRefName')
+              read open_pr_app_name open_pr_environment open_pr_tag <<< $(parse_pr_headRefName "$open_pr_branch")
 
-              if [[ "$pr_app_name" == "$app_name" && "$pr_environment" == "$environment" && "$pr_tag" != "$current_tag" && $pr_number < $trigger_pr_number ]]; then
-                  close_pr_and_delete_branch $pr_number $pr_branch
+              if [ "$trigger_pr_app_name" == "$open_pr_app_name" ] && [ "$trigger_pr_environment" == "$open_pr_environment" ] && [ "$trigger_pr_tag" != "$open_pr_tag" ] && [ $trigger_pr_number -gt $open_pr_number ]; then
+                  close_pr_and_delete_branch $open_pr_number $open_pr_branch
               fi
           done
       }
