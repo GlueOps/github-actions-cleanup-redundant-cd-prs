@@ -22,7 +22,7 @@ inputs:
   jq_version:
     description: "The version of jq to install"
     required: false
-    default: "1.7"
+    default: "1.7.1"
 
 runs:
   using: "composite"
