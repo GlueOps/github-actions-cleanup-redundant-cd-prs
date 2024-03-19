@@ -18,7 +18,7 @@ inputs:
   gh_cli_version:
     description: "The version of the gh cli to install"
     required: false
-    default: "2.42.0"
+    default: "2.44.1"
   jq_version:
     description: "The version of jq to install"
     required: false
@@ -28,7 +28,7 @@ runs:
   using: "composite"
   steps:
   - name: Checkout code
-    uses: actions/checkout@v3
+    uses: actions/checkout@v4
 
   - name: Install gh and jq
     shell: bash
